@@ -39,6 +39,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <pgmspace.h>
 #endif
 
+#include <stdint.h>
+
 // Many (but maybe not all) non-AVR board installs define macros
 // for compatibility with existing PROGMEM-reading AVR code.
 // Do our own checks and defines here for good measure...
