@@ -85,9 +85,9 @@
 #ifndef __DOXYGEN__
 #define __need_size_t
 #endif
-#include <inttypes.h>
+#include "inttypes.h"
 #include <stddef.h>
-#include <avr/io.h>
+#include "io.h"
 
 #ifndef __DOXYGEN__
 #ifndef __ATTR_CONST__

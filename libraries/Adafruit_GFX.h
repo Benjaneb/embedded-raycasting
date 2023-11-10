@@ -181,11 +181,11 @@ public:
   void cp437(bool x = true) { _cp437 = x; }
 
   using Print::write;
-#if ARDUINO >= 100
+// #if ARDUINO >= 100
   virtual size_t write(uint8_t);
-#else
-  virtual void write(uint8_t);
-#endif
+// #else
+//   virtual void write(uint8_t);
+// #endif
 
   /************************************************************************/
   /*!
