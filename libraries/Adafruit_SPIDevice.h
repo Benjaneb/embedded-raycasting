@@ -1,6 +1,8 @@
 #ifndef Adafruit_SPIDevice_h
 #define Adafruit_SPIDevice_h
 
+#include <stddef.h>
+
 #include "Arduino.h"
 
 #if !defined(SPI_INTERFACES_COUNT) ||                                          \
