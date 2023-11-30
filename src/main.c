@@ -4,51 +4,71 @@
 #define DISPLAY_WIDTH 128
 #define DISPLAY_HEIGHT 128
 
+#define DC_HIGH (PORTDSET = BIT(2))
+#define DC_LOW (PORTDCLR = BIT(2))
+#define RST_HIGH (PORTDSET = BIT(1))
+#define RST_LOW (PORTDCLR = BIT(1))
+
 #define BIT(x) 1 << x
 
-// Connections:
-// SCK  -> Port 13	-> 
-// MOSI -> Port 11	-> SDO
-// CS   -> Port 10	-> SS2
-// RST  -> Port 6	-> 
-// D/C  -> Port 5	-> 
+// Ouputs:
+// SCK  -> Pin 13	-> RG6
+// MOSI -> Pin 11	-> RG8
+// CS   -> Pin 10	-> RD4
+// RST  -> Pin 6	-> RD1
+// D/C  -> Pin 5	-> RD2
+
+// Inputs:
+// BTN1	-> Pin 4	-> RF1
+// BTN2	-> Pin 34	-> RD5
+// BTN3	-> Pin 36	-> RD6
+// BTN4	-> Pin 37	-> RD7
 
 typedef struct {
 	float r, g, b;
 } color;
 
-typedef uint8_t spi_packet;
+typedef uint16_t spi_packet;
+
+// Gets states of buttons
+int getButtonStates() {
+    return (PORTD >> 5) & 0x7;
+}
 
 void spi_send(spi_packet data) {
-	while(!(SPI2STAT & 0x8)); // Wait until buffer is empty
+	while(!(SPI2STAT & BIT(3))); // Wait until buffer is empty
 	SPI2BUF = data;
 }
 
 // Initialize port settings
 // Some parts of the function brought from mipslabmain.c
 void ports_init() {
+	// Input pins
+	TRISFSET = BIT(1);	// Set button 1 as input
+	TRISDSET = BIT(7) | BIT(6) | BIT(5); // Set button 2,3,4 as input
+
 	// Set peripheral bus clock to same frequency as sysclock (80 MHz)
-	SYSKEY = 0xAA996655;		// Unlock OSCCON, step 1
-	SYSKEY = 0x556699AA;		// Unlock OSCCON, step 2
-	while (OSCCON & (1 << 21));	// Wait until PBDIV ready
-	OSCCONCLR = 0x180000;		// clear PBDIV bit <0,1>	(PBCLK = SYSCLK / 1)
-	while (OSCCON & (1 << 21));	// Wait until PBDIV ready
-	SYSKEY = 0x0;				// Lock OSCCON
+	SYSKEY = 0xAA996655;			// Unlock OSCCON, step 1
+	SYSKEY = 0x556699AA;			// Unlock OSCCON, step 2
+	while (OSCCON & BIT(21));		// Wait until PBDIV ready
+	OSCCONCLR = BIT(20) | BIT(19);	// clear PBDIV bit <0,1>	(PBCLK = SYSCLK / 1)
+	while (OSCCON & BIT(21));		// Wait until PBDIV ready
+	SYSKEY = 0x0;					// Lock OSCCON
 
 	// Set pins for display signals as output
-	PORTF = 0xFFFF;
-	PORTG = (1 << 9);
-	TRISFCLR = 0x70;
-	TRISGCLR = 0x200;
+	PORTG = BIT(8);		// Start with MOSI on high
+	// PORTD = BIT(4);		// Start with CS on high
+	TRISGCLR = BIT(8) | BIT(6);			// Set output for MOSI & clock
+	TRISDCLR = BIT(4) | BIT(2) | BIT(1)	// Set output for CS, D/C & RST
 
 	// SPI settings
 	SPI2BRG = 4;			// Baud rate 
-	SPI2STATCLR = 0x40;		// SPIROV = 0	(no overflow has occurred)
+	SPI2STATCLR = BIT(6);	// SPIROV = 0	(no overflow has occurred)
 	SPI2CON = 0;			// Clear SPI2CON (really necessary?)
-	// SPI2CONSET = 0x400;		// MODE16 = 1 	(if 16-bit data width)
-	SPI2CONSET = 0x40;		// CKP = 1 		(idle on high level)
-	SPI2CONSET = 0x20; 		// MSTEN = 1 	(master mode)
-	SPI2CONSET = 0x8000;	// ON = 1 		(switch on SPI module)
+	SPI2CONSET = BIT(10);	// MODE16 = 1 	(16-bit data width)
+	SPI2CONSET = BIT(6);	// CKP = 1 		(idle on high level)
+	SPI2CONSET = BIT(5); 	// MSTEN = 1 	(master mode)
+	SPI2CONSET = BIT(15);	// ON = 1 		(switch on SPI module)
 }
 
 // Initialize settings on the display
