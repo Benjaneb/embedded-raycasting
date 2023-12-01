@@ -30,6 +30,9 @@ typedef struct {
 
 typedef uint16_t spi_packet;
 
+// In routines.S
+void quicksleep(int delay);
+
 // Gets states of buttons
 int getButtonStates() {
     return (PORTD >> 5) & 0x7;
