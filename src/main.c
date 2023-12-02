@@ -32,6 +32,9 @@ typedef struct {
 
 typedef uint16_t spi_packet;
 
+// In routines.S
+void quicksleep(int delay);
+
 // Returns in format: concat(R<0:4>, G<0:5>, B<0:4>)
 spi_packet pixel_to_packet(color pixel) {
 	return (pixel.r & 0x1F << 11) | (pixel.g & 0x3F << 5) | (pixel.b & 0x1F);
