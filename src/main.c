@@ -4,12 +4,14 @@
 #define DISPLAY_WIDTH 128
 #define DISPLAY_HEIGHT 128
 
-#define DC_HIGH (PORTDSET = BIT(2))
-#define DC_LOW (PORTDCLR = BIT(2))
-#define RST_HIGH (PORTDSET = BIT(1))
-#define RST_LOW (PORTDCLR = BIT(1))
-
 #define BIT(x) 1 << x
+
+#define DISPLAY_DATA_MODE (PORTDSET = BIT(2))
+#define DISPLAY_COMMAND_MODE (PORTDCLR = BIT(2))
+#define RST_LOW (PORTDCLR = BIT(1))
+#define RST_HIGH (PORTDSET = BIT(1))
+#define CS_LOW (PORTDCLR = BIT(4))
+#define CS_HIGH (PORTDSET = BIT(4))
 
 // Ouputs:
 // SCK  -> Pin 13	-> RG6
@@ -25,13 +27,18 @@
 // BTN4	-> Pin 37	-> RD7
 
 typedef struct {
-	float r, g, b;
+	uint8_t r, g, b;
 } color;
 
 typedef uint16_t spi_packet;
 
-// Gets states of buttons
-int getButtonStates() {
+// Returns in format: concat(R<0:4>, G<0:5>, B<0:4>)
+spi_packet pixel_to_packet(color pixel) {
+	return (pixel.r & 0x1F << 11) | (pixel.g & 0x3F << 5) | (pixel.b & 0x1F);
+}
+
+// Gets states of button 1-4 as LSBs being | BTN4 | BTN3 | BTN2 | BTN1 |
+int get_button_states() {
     return (PORTD >> 5) & 0x7;
 }
 
@@ -57,7 +64,8 @@ void ports_init() {
 
 	// Set pins for display signals as output
 	PORTG = BIT(8);		// Start with MOSI on high
-	// PORTD = BIT(4);		// Start with CS on high
+	PORTD = BIT(4);		// Start with CS on high
+	RST_HIGH;	// Reset is active low
 	TRISGCLR = BIT(8) | BIT(6);			// Set output for MOSI & clock
 	TRISDCLR = BIT(4) | BIT(2) | BIT(1)	// Set output for CS, D/C & RST
 
@@ -78,7 +86,18 @@ void display_init() {
 
 // Output pixel data to the display via SPI
 void update_display(color display_buf[DISPLAY_HEIGHT][DISPLAY_WIDTH]) {
+	CS_LOW;	// Enable transmission
+	DISPLAY_DATA_MODE;
+	// SPI buffer is 32-bit and thus holds two 16-bit pixels, which might increase performance
+	// In the meantime send one pixel at a time
 
+	for (int y = 0; y < DISPLAY_HEIGHT; y++) {
+		for (int x = 0; x < DISPLAY_WIDTH; x++) {
+			spi_packet pixel_packet = pixel_to_packet(display_buf[y][x]);
+			spi_send(pixel_packet);
+		}
+	}
+	CS_HIGH; // Disable transmission
 }
 
 int main() {
