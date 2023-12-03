@@ -14,6 +14,7 @@
 #define CS_HIGH (PORTDSET = BIT(4))
 
 // Ouputs:
+// Display pin -> board pin -> chip signal
 // SCK  -> Pin 13	-> RG6
 // MOSI -> Pin 11	-> RG8
 // CS   -> Pin 10	-> RD4
@@ -84,19 +85,47 @@ void ports_init() {
 
 // Initialize settings on the display
 void display_init() {
-	
+	CS_LOW;
+
+	// X domain of drawing area (CASET)
+	DISPLAY_COMMAND_MODE;
+	spi_send(0x2A);
+	DISPLAY_DATA_MODE;
+	spi_send(0);   // X start
+	spi_send(127); // X end
+
+	// Y domain of drawing area (RASET)
+	DISPLAY_COMMAND_MODE;
+	spi_send(0x2B);
+	DISPLAY_DATA_MODE;
+	spi_send(0);   // Y start
+	spi_send(127); // Y end
+
+	// Interface pixel format (COLMOD)
+	DISPLAY_COMMAND_MODE;
+	spi_send(0x3A);
+	DISPLAY_DATA_MODE;
+	spi_send(0x5); // 16-bit pixels
+
+	DISPLAY_COMMAND_MODE;
+	spi_send(0x29); // Display on mode
+
+	CS_HIGH;
 }
 
 // Output pixel data to the display via SPI
 void update_display(color display_buf[DISPLAY_HEIGHT][DISPLAY_WIDTH]) {
 	CS_LOW;	// Enable transmission
-	DISPLAY_DATA_MODE;
+	DISPLAY_COMMAND_MODE;
+	spi_send(0x2C); // Memory write command
+
 	// SPI buffer is 32-bit and thus holds two 16-bit pixels, which might increase performance
 	// In the meantime send one pixel at a time
-
 	for (int y = 0; y < DISPLAY_HEIGHT; y++) {
 		for (int x = 0; x < DISPLAY_WIDTH; x++) {
 			spi_packet pixel_packet = pixel_to_packet(display_buf[y][x]);
+
+			DISPLAY_DATA_MODE;
 			spi_send(pixel_packet);
 		}
 	}
