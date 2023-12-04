@@ -1,8 +1,7 @@
 #include <stdint.h>
 #include <pic32mx.h>
 
-#define DISPLAY_WIDTH 128
-#define DISPLAY_HEIGHT 128
+#include "rendering.h"
 
 #define BIT(x) 1 << x
 
@@ -27,26 +26,15 @@
 // BTN3	-> Pin 36	-> RD6
 // BTN4	-> Pin 37	-> RD7
 
-typedef struct {
-	uint8_t r, g, b;
-} color;
-
-typedef uint16_t spi_packet;
-
 // In routines.S
 void quicksleep(int delay);
-
-// Returns in format: concat(R<0:4>, G<0:5>, B<0:4>)
-spi_packet pixel_to_packet(color pixel) {
-	return (pixel.r & 0x1F << 11) | (pixel.g & 0x3F << 5) | (pixel.b & 0x1F);
-}
 
 // Gets states of button 1-4 as LSBs being | BTN4 | BTN3 | BTN2 | BTN1 |
 int get_button_states() {
     return (PORTD >> 5) & 0x7;
 }
 
-void spi_send(spi_packet data) {
+void spi_send(uint8_t data) {
 	while(!(SPI2STAT & BIT(3))); // Wait until buffer is empty
 	SPI2BUF = data;
 }
@@ -77,7 +65,7 @@ void ports_init() {
 	SPI2BRG = 4;			// Baud rate 
 	SPI2STATCLR = BIT(6);	// SPIROV = 0	(no overflow has occurred)
 	SPI2CON = 0;			// Clear SPI2CON (really necessary?)
-	SPI2CONSET = BIT(10);	// MODE16 = 1 	(16-bit data width)
+	// SPI2CONSET = BIT(10);	// MODE16 = 1 	(16-bit data width)
 	SPI2CONSET = BIT(6);	// CKP = 1 		(idle on high level)
 	SPI2CONSET = BIT(5); 	// MSTEN = 1 	(master mode)
 	SPI2CONSET = BIT(15);	// ON = 1 		(switch on SPI module)
@@ -92,6 +80,8 @@ void display_init() {
 	spi_send(0x2A);
 	DISPLAY_DATA_MODE;
 	spi_send(0);   // X start
+	spi_send(0);   // X start
+	spi_send(0);   // X end
 	spi_send(127); // X end
 
 	// Y domain of drawing area (RASET)
@@ -99,6 +89,8 @@ void display_init() {
 	spi_send(0x2B);
 	DISPLAY_DATA_MODE;
 	spi_send(0);   // Y start
+	spi_send(0);   // Y start
+	spi_send(0);   // Y end
 	spi_send(127); // Y end
 
 	// Interface pixel format (COLMOD)
@@ -118,15 +110,18 @@ void update_display(color display_buf[DISPLAY_HEIGHT][DISPLAY_WIDTH]) {
 	CS_LOW;	// Enable transmission
 	DISPLAY_COMMAND_MODE;
 	spi_send(0x2C); // Memory write command
+	DISPLAY_DATA_MODE;
 
 	// SPI buffer is 32-bit and thus holds two 16-bit pixels, which might increase performance
 	// In the meantime send one pixel at a time
 	for (int y = 0; y < DISPLAY_HEIGHT; y++) {
 		for (int x = 0; x < DISPLAY_WIDTH; x++) {
-			spi_packet pixel_packet = pixel_to_packet(display_buf[y][x]);
+			color pixel = display_buf[y][x];
+			// concat(R<0:4>, G<0:5>, B<0:4>)
+			int pixel_packet = (pixel.r & 0x1F << 11) | (pixel.g & 0x3F << 5) | (pixel.b & 0x1F);
 
-			DISPLAY_DATA_MODE;
-			spi_send(pixel_packet);
+			spi_send((uint8_t)(pixel_packet >> 8));
+			spi_send((uint8_t)(pixel_packet & 0xFF));
 		}
 	}
 	CS_HIGH; // Disable transmission
@@ -140,18 +135,24 @@ int main() {
 
 	// Game loop
 	while (1) {
+		// Test
 		for (int y = 0; y < DISPLAY_HEIGHT; y++) {
 			for (int x = 0; x < DISPLAY_WIDTH; x++) {
 				color pixel_color = { 0, 0, 0 };
 				
-				if (x % 2 == 0) { // Test
-					pixel_color.r = 1;
-					pixel_color.g = 1;
-					pixel_color.b = 1;
+				if (x % 2 == 0) {
+					pixel_color.r = 0xFF;
+					pixel_color.g = 0xFF;
+					pixel_color.b = 0xFF;
 				}
 				display_buf[y][x] = pixel_color;
 			}
 		}
+
+		// Execute raycasting logic and draw for each column on the screen
+		// for (int x = 0; x < DISPLAY_WIDTH; x++) {
+		// 	render_column(display_buf);
+		// }
 
 		update_display(display_buf);
 	}
