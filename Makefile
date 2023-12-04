@@ -12,7 +12,7 @@ PROGNAME	= outfile
 LINKSCRIPT	:= p$(shell echo "$(DEVICE)" | tr '[:upper:]' '[:lower:]').ld
 
 # Compiler and linker flags
-CFLAGS		+= -ffreestanding -march=mips32r2 -msoft-float -Wa,-msoft-float
+CFLAGS		+= -ffreestanding -march=mips32r2 -msoft-float -Wa,-msoft-float -std=c99
 ASFLAGS		+= -msoft-float
 LDFLAGS		+= -T $(LINKSCRIPT)
 
@@ -21,9 +21,9 @@ ELFFILE		= $(PROGNAME).elf
 HEXFILE		= $(PROGNAME).hex
 
 # Find all source files automatically
-CFILES          = $(wildcard *.c)
-ASFILES         = $(wildcard *.S)
-SYMSFILES	= $(wildcard *.syms)
+CFILES          = $(wildcard src/*.c)
+ASFILES         = $(wildcard src/*.S)
+SYMSFILES	= $(wildcard src/*.syms)
 
 # Object file names
 OBJFILES        = $(CFILES:.c=.c.o)

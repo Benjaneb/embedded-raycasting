@@ -71,7 +71,7 @@ void ports_init() {
 	PORTD = BIT(4);		// Start with CS on high
 	RST_HIGH;	// Reset is active low
 	TRISGCLR = BIT(8) | BIT(6);			// Set output for MOSI & clock
-	TRISDCLR = BIT(4) | BIT(2) | BIT(1)	// Set output for CS, D/C & RST
+	TRISDCLR = BIT(4) | BIT(2) | BIT(1);// Set output for CS, D/C & RST
 
 	// SPI settings
 	SPI2BRG = 4;			// Baud rate 
@@ -136,7 +136,7 @@ int main() {
 	ports_init();
 	display_init();
 
-	color display_buf[DISPLAY_HEIGHT][DISPLAY_WIDTH] = {0};
+	color display_buf[DISPLAY_HEIGHT][DISPLAY_WIDTH];
 
 	// Game loop
 	while (1) {
