@@ -18,7 +18,7 @@ int get_button4() {
     return PORTD & (1 << 7);
 }
 
-void move_player(player p, float sinAngle, float cosAngle) {
+void move_player(player *p, float sinAngle, float cosAngle) {
     static const float turningSpeed = 0.1f;
     static const float movementSpeed = 0.1f;
 
@@ -26,23 +26,31 @@ void move_player(player p, float sinAngle, float cosAngle) {
 
     // Turn right
     if (get_button1()) {
-        p.facingAngle -= turningSpeed;
+        p->facingAngle -= turningSpeed;
     }
 
     // Move backwards
     if (get_button2()) {
-        p.x -= cosAngle * movementSpeed;
-        p.y -= sinAngle * movementSpeed;
+        float new_x = p->x - cosAngle * movementSpeed;
+        float new_y = p->y - sinAngle * movementSpeed;
+        if (!is_wall(new_x, new_y)) {
+            p->x = new_x;
+            p->y = new_y;
+        }
     }
 
     // Move forward
     if (get_button3()) {
-        p.x += cosAngle * movementSpeed;
-        p.y += sinAngle * movementSpeed;
+        float new_x = p->x + cosAngle * movementSpeed;
+        float new_y = p->y + sinAngle * movementSpeed;
+        if (!is_wall(new_x, new_y)) {
+            p->x = new_x;
+            p->y = new_y;
+        }
     }
 
     // Turn left
     if (get_button4()) {
-        p.facingAngle += turningSpeed;
+        p->facingAngle += turningSpeed;
     }
 }
