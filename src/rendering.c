@@ -75,8 +75,11 @@ void move_player(player *p, float dx, float dy) {
     float new_x = p->x + dx;
     float new_y = p->y + dy;
 
-    if (!is_wall(new_x, new_y)) {
-        p->x = new_x;
+    if (!is_wall(p->x, new_y)) { // Check collision only in y direction
         p->y = new_y;
+    }
+
+    if (!is_wall(new_x, p->y)) { // Check collision only in x direction
+        p->x = new_x;
     }
 }
