@@ -269,7 +269,7 @@ int main() {
 
 	// color column_buf[DISPLAY_HEIGHT];
 	uint8_t display_buf[DISPLAY_WIDTH][DISPLAY_HEIGHT];
-	
+
 	// Game loop
 	while (1) {
 		clear(display_buf);
