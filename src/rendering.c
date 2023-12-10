@@ -68,7 +68,7 @@ void render_column(uint8_t column_buf[DISPLAY_HEIGHT], int screenX, player p, fl
     
     vector direction;
     direction.x = screenX - DISPLAY_WIDTH / 2.0f + cosAngle;
-    direction.y = -tanf(fov / 2.0f) * fabsf(direction.x) + sinAngle;
+    direction.y = -(fabsf(direction.x) + sinAngle) / tanf(fov / 2.0f);
 
     vector marching_pos = { p.x, p.y };
 
