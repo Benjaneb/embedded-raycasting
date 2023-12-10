@@ -66,15 +66,8 @@ int is_wall(float x, float y) {
 void render_column(uint8_t column_buf[DISPLAY_HEIGHT], int screenX, player p, float sinAngle, float cosAngle) {
     static const float fov = 0.45f * PI; // field of view based on 45 degrees
     
-    vector direction;
-    direction.x = screenX - DISPLAY_WIDTH / 2.0f + cosAngle;
-    direction.y = (DISPLAY_WIDTH / 2.0f) / tanf(fov / 2.0f);
-
-    // Rotate
-    direction.x = direction.x * cosAngle + direction.y * sinAngle;
-    direction.y = direction.x * (-sinAngle) + direction.y * cosAngle;
-
-    vector marching_pos = { p.x, p.y };
+    float slope = tanf(fov / 2.0f);
+    float y_intercept = p.y - slope * p.x;
 
     // March in the direction until hitting a wall or reaching MAX_DISTANCE
     float distance;
@@ -83,10 +76,10 @@ void render_column(uint8_t column_buf[DISPLAY_HEIGHT], int screenX, player p, fl
         // Dynamic step size based on the distance
         float step = fmax(STEP_SIZE, distance * 0.1f);
 
-        marching_pos.x += step * direction.x;
-        marching_pos.y += step * direction.y;
+        float x = p.x + step * cosAngle;
+        float y = slope * x + y_intercept;
 
-        if (is_wall(marching_pos.x, marching_pos.y)) {
+        if (is_wall(x, y)) {
             float wall_height = DISPLAY_HEIGHT / (distance * 4.0f);
             int start_y = DISPLAY_HEIGHT / 2.0f - wall_height / 2.0f;
             int end_y = DISPLAY_HEIGHT / 2.0f + wall_height / 2.0f;
