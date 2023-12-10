@@ -55,7 +55,7 @@ int is_wall(float x, float y) {
     int flooredY = (int)floorf(y);
 
     // Return false if position is outside map
-    if (flooredX < 0 || flooredX > MAP_WIDTH ||
+    if (flooredX < 0 || flooredX > MAP_WIDTH || 
         flooredY < 0 || flooredY > MAP_HEIGHT)
         return 0;
     
@@ -67,11 +67,12 @@ void render_column(uint8_t column_buf[DISPLAY_HEIGHT], int screenX, player p, fl
     static const float fov = 0.25f * PI; // field of view
 
     vector direction;
-    direction.x = screenX - DISPLAY_WIDTH / 2.0f;
-    direction.y = -tanf(fov / 2.0f) * DISPLAY_WIDTH / 2.0f;
+    direction.x = screenX - DISPLAY_WIDTH / 2.0f; // + cosAngle;
+    direction.y = -tanf(fov / 2.0f) * fabsf(direction.x); // + sinAngle;
 
     vector marching_pos = { p.x, p.y };
 
+    // March in the direction until hitting a wall or reaching MAX_DISTANCE
     for (float distance = STEP_SIZE; distance < MAX_DISTANCE; distance += STEP_SIZE) {
 
         marching_pos.x += distance * direction.x;
