@@ -84,8 +84,8 @@ void render_column(uint8_t column_buf[DISPLAY_HEIGHT], int screenX, player p, fl
     for (float distance = STEP_SIZE; distance < MAX_DISTANCE; distance += STEP_SIZE) {
         
         // Move in x and y directions
-        x += stepX * STEP_SIZE;
-        y += stepY * STEP_SIZE;
+        x += stepX * STEP_SIZE * dx;
+        y += stepY * STEP_SIZE * dy;
 
         if (is_wall(floor(x), floor(y))) {
             float wall_height = DISPLAY_HEIGHT / (distance * 4.0f);
@@ -95,5 +95,4 @@ void render_column(uint8_t column_buf[DISPLAY_HEIGHT], int screenX, player p, fl
             break;
         }
     }
-}
 
