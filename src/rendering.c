@@ -68,15 +68,19 @@ void render_column(uint8_t column_buf[DISPLAY_HEIGHT], int screenX, player p, fl
     
     vector direction;
     direction.x = screenX - DISPLAY_WIDTH / 2.0f + cosAngle;
-    direction.y = -(fabsf(direction.x) + sinAngle) / tanf(fov / 2.0f);
+    direction.y = (DISPLAY_WIDTH / 2.0f) / tanf(fov / 2.0f);
+
+    // Rotate
+    direction.x = direction.x * cosAngle + direction.y * sinAngle;
+    direction.y = direction.x * (-sinAngle) + direction.y * cosAngle;
 
     vector marching_pos = { p.x, p.y };
 
     // March in the direction until hitting a wall or reaching MAX_DISTANCE
     for (float distance = STEP_SIZE; distance < MAX_DISTANCE; distance += STEP_SIZE) {
 
-        marching_pos.x += distance * direction.x;
-        marching_pos.y += distance * direction.y;
+        marching_pos.x += STEP_SIZE * direction.x;
+        marching_pos.y += STEP_SIZE * direction.y;
 
         if (is_wall(marching_pos.x, marching_pos.y)) {
             float wall_height = DISPLAY_HEIGHT / (distance * 4.0f);

@@ -33,9 +33,9 @@ void move_player(player *p, float dx, float dy) {
     }
 }
 
-void control_player(player *p, float sinAngle, float cosAngle) {
-    static const float turningSpeed = 0.1f;
-    static const float movementSpeed = 0.1f;
+void control_player(player *p, float sinAngle, float cosAngle, float deltaTime) {
+    const float turningSpeed = 0.1f * deltaTime;
+    const float movementSpeed = 0.5f * deltaTime;
 
     // Buttons are physically arranged: BTN4 BTN3 BTN2 BTN1
 

@@ -13,6 +13,6 @@ int get_button4();
 
 void move_player(player *p, float dx, float dy);
 
-void control_player(player *p, float sinAngle, float cosAngle);
+void control_player(player *p, float sinAngle, float cosAngle, float deltaTime);
 
 #endif

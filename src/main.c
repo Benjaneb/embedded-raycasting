@@ -96,6 +96,8 @@ void ports_init() {
 	TRISECLR = 0xFF; // Set lights as output
 	PORTE = 0x0; // Turn off lights
 
+	T2CONSET = BIT(15); // Start timer 2
+
 	// Set peripheral bus clock to same frequency as sysclock (80 MHz)
 	SYSKEY = 0xAA996655;			// Unlock OSCCON, step 1
 	SYSKEY = 0x556699AA;			// Unlock OSCCON, step 2
@@ -270,8 +272,10 @@ int main() {
 	// color column_buf[DISPLAY_HEIGHT];
 	uint8_t display_buf[DISPLAY_WIDTH][DISPLAY_HEIGHT];
 
+
 	// Game loop
 	while (1) {
+		int startTime = TMR2;
 		clear(display_buf);
 		// Test
 		// for (int y = 0; y < DISPLAY_HEIGHT; y++) {
@@ -302,8 +306,10 @@ int main() {
 			// update_display(column_buf, x);
 		}
 		update_oled_display(display_buf);
+
+		float deltaTime = (TMR2 - startTime) / 80000000 * 1000; // in milliseconds
 		
-		control_player(&p, sinAngle, cosAngle);
+		control_player(&p, sinAngle, cosAngle, deltaTime);
 	}
 
     return 0;
