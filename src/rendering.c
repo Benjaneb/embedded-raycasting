@@ -42,8 +42,8 @@ float clamp(float x, float min, float max) {
 
 void draw_vertical_line(uint8_t column_buf[DISPLAY_HEIGHT], int start_y, int end_y) {
     // Clamp start_y and end_y
-    start_y = clamp(start_y, 0, DISPLAY_HEIGHT);
-    end_y = clamp(end_y, 0, DISPLAY_HEIGHT);
+    start_y = clamp(start_y, 0, DISPLAY_HEIGHT - 1);
+    end_y = clamp(end_y, 0, DISPLAY_HEIGHT - 1);
 
     // Turn on every pixel from start_y to end_y
     for (int y = start_y; y <= end_y; y++) {
@@ -69,46 +69,41 @@ int is_wall(float x, float y) {
     int flooredY = (int)floorf(y);
 
     // Return false if position is outside map
-    if (flooredX < 0 || flooredX > MAP_WIDTH || 
-        flooredY < 0 || flooredY > MAP_HEIGHT)
+    if (flooredX < 0 || flooredX >= MAP_WIDTH || 
+        flooredY < 0 || flooredY >= MAP_HEIGHT)
         return 0;
     
-    return map_grid[flooredX][flooredY];
+    return map[flooredY][flooredX] != '.';
 }
 
 // Render a single column with raycasting
-void render_column(uint8_t column_buf[DISPLAY_HEIGHT], int screenX, player p, float sinAngle, float cosAngle) {
-    static const float fov = 0.45f * PI; // field of view based on 45 degrees
+void render_column(uint8_t column_buf[DISPLAY_WIDTH][DISPLAY_HEIGHT], player p, float sinAngle, float cosAngle) {
+    int startX = -MAX_DISTANCE;
+    int endX = MAX_DISTANCE;
+    float deltaX = endX - startX;
+    int column = 0;
 
-    // Calculate the slope of the ray
-    float dx = cosAngle;
-    float dy = sinAngle;
-    float slope = dy / dx;
-    float intercept = p.y - slope * p.x;
+    for (float x = startX; x < endX; x += deltaX / (float)DISPLAY_WIDTH) {
+        column++;
+        // Calculate the slope of the ray
+        float slope = x / MAX_DISTANCE;
 
-    // Determine the direction of the ray
-    int stepX = dx > 0 ? 1 : -1;
-    int stepY = dy > 0 ? 1 : -1;
+        // March in the direction until hitting a wall or reaching MAX_DISTANCE
+        for (float distance = 0; distance < MAX_DISTANCE; distance += STEP_SIZE) {
+            // Move in x and y directions
+            float rayX = slope * distance;
+            float rayY = distance;
+            float rotatedRayX = cosAngle * rayX - sinAngle * rayY + p.x;
+            float rotatedRayY = sinAngle * rayX + cosAngle * rayY + p.y;
 
-    // Start at the player's position
-    float x = p.x;
-    float y = p.y;
+            if (is_wall(rotatedRayX, rotatedRayY)) {
+                float wall_height = DISPLAY_HEIGHT / distance;
+                int start_y = DISPLAY_HEIGHT / 2.0f - wall_height / 2.0f;
+                int end_y = DISPLAY_HEIGHT / 2.0f + wall_height / 2.0f;
 
-    // March in the direction until hitting a wall or reaching MAX_DISTANCE
-    for (int step = 0; step < MAX_STEPS; step++) {
-        
-        // Move in x and y directions
-        x += stepX * STEP_SIZE;
-        y += stepY * STEP_SIZE;
-
-        if (is_wall(x, y)) {
-            // Use Manhattan distance
-            float distance = abs(x - p.x) + abs(y - p.y);
-            float wall_height = DISPLAY_HEIGHT / (distance * 4.0f);
-            int start_y = DISPLAY_HEIGHT / 2.0f - wall_height / 2.0f;
-            int end_y = DISPLAY_HEIGHT / 2.0f + wall_height / 2.0f;
-            draw_vertical_line(column_buf, start_y, end_y);
-            break;
+                draw_vertical_line(column_buf[column], start_y, end_y);
+                break;
+            }
         }
     }
-
+}

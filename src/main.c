@@ -298,18 +298,19 @@ int main() {
 
 		float sinAngle = sinf(p.facingAngle);
 		float cosAngle = cosf(p.facingAngle);
-		
+
 		// Execute raycasting logic and draw for each column on the screen
-		for (int x = 0; x < DISPLAY_WIDTH; x++) {
-			render_column(display_buf[x], x, p, sinAngle, cosAngle);
+		// for (int x = 0; x < DISPLAY_WIDTH; x++) {
+			render_column(display_buf, p, sinAngle, cosAngle);
 
 			// update_display(column_buf, x);
-		}
+		// }
 		update_oled_display(display_buf);
 
 		float deltaTime = (TMR2 - startTime) / 80000000 * 1000; // in milliseconds
 		
 		control_player(&p, sinAngle, cosAngle, deltaTime);
+		
 	}
 
     return 0;

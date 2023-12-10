@@ -34,8 +34,8 @@ void move_player(player *p, float dx, float dy) {
 }
 
 void control_player(player *p, float sinAngle, float cosAngle, float deltaTime) {
-    const float turningSpeed = 0.1f * deltaTime;
-    const float movementSpeed = 0.5f * deltaTime;
+    const float turningSpeed = 0.3f;
+    const float movementSpeed = 0.5f;
 
     // Buttons are physically arranged: BTN4 BTN3 BTN2 BTN1
 
@@ -46,12 +46,12 @@ void control_player(player *p, float sinAngle, float cosAngle, float deltaTime) 
 
     // Move backwards
     if (get_button2()) {
-        move_player(p, -cosAngle * movementSpeed, -sinAngle * movementSpeed);
+        move_player(p, sinAngle * movementSpeed, -cosAngle * movementSpeed);
     }
 
     // Move forward
     if (get_button3()) {
-        move_player(p, cosAngle * movementSpeed, sinAngle * movementSpeed);
+        move_player(p, -sinAngle * movementSpeed, cosAngle * movementSpeed);
     }
 
     // Turn left
