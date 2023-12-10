@@ -64,7 +64,7 @@ int is_wall(float x, float y) {
 
 // Render a single column with raycasting
 void render_column(uint8_t column_buf[DISPLAY_HEIGHT], int screenX, player p, float sinAngle, float cosAngle) {
-    static const float fov = 0.45f * PI; // field of view
+    static const float fov = 0.45f * PI; // field of view based on 45 degrees
     
     vector direction;
     direction.x = screenX - DISPLAY_WIDTH / 2.0f + cosAngle;
@@ -77,10 +77,14 @@ void render_column(uint8_t column_buf[DISPLAY_HEIGHT], int screenX, player p, fl
     vector marching_pos = { p.x, p.y };
 
     // March in the direction until hitting a wall or reaching MAX_DISTANCE
-    for (float distance = STEP_SIZE; distance < MAX_DISTANCE; distance += STEP_SIZE) {
+    float distance;
+    for (distance = STEP_SIZE; distance < MAX_DISTANCE; distance += STEP_SIZE) {
+        
+        // Dynamic step size based on the distance
+        float step = fmax(STEP_SIZE, distance * 0.1f);
 
-        marching_pos.x += STEP_SIZE * direction.x;
-        marching_pos.y += STEP_SIZE * direction.y;
+        marching_pos.x += step * direction.x;
+        marching_pos.y += step * direction.y;
 
         if (is_wall(marching_pos.x, marching_pos.y)) {
             float wall_height = DISPLAY_HEIGHT / (distance * 4.0f);
