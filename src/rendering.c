@@ -1,8 +1,6 @@
 #include <math.h>
 #include "rendering.h"
 
-#define PI 3.14159265f
-
 #define MAX_DISTANCE 10
 #define MAX_STEPS 120
 
@@ -103,7 +101,7 @@ int is_wall(float x, float y) {
 }
 
 // Render a single column with raycasting
-void render_column(uint8_t column_buf[DISPLAY_WIDTH][DISPLAY_HEIGHT], player p, float sinAngle, float cosAngle) {
+void render(uint8_t column_buf[DISPLAY_WIDTH][DISPLAY_HEIGHT], player p, float sinAngle, float cosAngle) {
     int startX = -MAX_DISTANCE;
     int endX = MAX_DISTANCE;
     float deltaX = endX - startX;
@@ -124,8 +122,8 @@ void render_column(uint8_t column_buf[DISPLAY_WIDTH][DISPLAY_HEIGHT], player p, 
 
             if (is_wall(rotatedRayX, rotatedRayY)) {
                 float wall_height = DISPLAY_HEIGHT / distance;
-                int start_y = DISPLAY_HEIGHT / 2.0f - wall_height / 2.0f;
-                int end_y = DISPLAY_HEIGHT / 2.0f + wall_height / 2.0f;
+                int start_y = DISPLAY_HEIGHT / 2.0f - wall_height / 2.0f + p.breathing;
+                int end_y = DISPLAY_HEIGHT / 2.0f + wall_height / 2.0f + p.breathing;
 
                 // Clamp start_y and end_y
                 start_y = clamp(start_y, 0, DISPLAY_HEIGHT - 1);

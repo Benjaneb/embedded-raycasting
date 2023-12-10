@@ -14,7 +14,7 @@
 #define CS_LOW (PORTBCLR = BIT(10))
 #define CS_HIGH (PORTBSET = BIT(10))
 
-// Software SPI
+// Ports for software SPI
 #define SCK_LOW (PORTBCLR = BIT(4))
 #define SCK_HIGH (PORTBSET = BIT(4))
 #define MOSI_LOW (PORTBCLR = BIT(8))
@@ -55,16 +55,16 @@
 // BTN3	-> Pin 36	-> RD6
 // BTN4	-> Pin 37	-> RD7
 
-// In routines.S
+// In routines.S, to avoid getting optimized out by compiler
 void quicksleep(int delay);
 
-// Mostly for debugging
+// Set the ChipKIT LEDs
 void setLights(uint8_t value) {
 	volatile uint8_t *porte = (uint8_t*)0xbf886110;
 	*porte = value;
 } 
 
-// Software SPI via bit banging
+// (BROKEN/UNUSED) Software SPI via bit banging
 void sw_spi_send(uint8_t data) {
 	CS_LOW;
 	for (int i = 0; i < 8; i++) {
@@ -80,10 +80,16 @@ void sw_spi_send(uint8_t data) {
 	CS_HIGH;
 }
 
+uint8_t spi_send_recv(uint8_t data) {
+	while(!(SPI2STAT & BIT(3))); // Wait until transmit buffer is empty
+	SPI2BUF = data;
+	while(!(SPI2STAT & BIT(0)));
+	return SPI2BUF;
+}
+
 void spi_send(uint8_t data) {
 	sw_spi_send(data);
-	// while(!(SPI2STAT & BIT(3))); // Wait until transmit buffer is empty
-	// SPI2BUF = data;
+	// spi_send_recv(data);
 }
 
 // Initialize port settings
@@ -131,7 +137,7 @@ void ports_init() {
 	SPI2CONSET = BIT(15);	// ON = 1 		(switch on SPI module)
 }
 
-// Initialize settings on the extern color display
+// (BROKEN/UNUSED) Initialize settings on the extern color display
 void display_init() {
 	quicksleep(1000000);
 	DISPLAY_COMMAND_MODE;
@@ -174,13 +180,6 @@ void display_init() {
 	spi_send(0x29); // Display on
 }
 
-uint8_t spi_send_recv(uint8_t data) {
-	while(!(SPI2STAT & 0x08));
-	SPI2BUF = data;
-	while(!(SPI2STAT & 1));
-	return SPI2BUF;
-}
-
 // Set up chipKIT display
 void oled_display_init(void) {
 	DISPLAY_CHANGE_TO_COMMAND_MODE;
@@ -212,6 +211,7 @@ void oled_display_init(void) {
 	spi_send_recv(0xAF); // Display ON
 }
 
+// Output display buffer to ChipKIT OLED display
 void update_oled_display(uint8_t display_buf[DISPLAY_WIDTH][DISPLAY_HEIGHT]) {
 	// Loop through page segments 1-4 which consists of 8 rows of pixels each
 	for (int i = 0; i < 4; i++) {
@@ -236,7 +236,7 @@ void update_oled_display(uint8_t display_buf[DISPLAY_WIDTH][DISPLAY_HEIGHT]) {
 	}
 }
 
-// Output pixel data of a column to the display via SPI
+// (BROKEN/UNUSED) Output pixel data of a column to the extern display via SPI
 void update_display(color column_buf[DISPLAY_HEIGHT], int column) {
 	CS_LOW;	// Enable transmission
 	DISPLAY_COMMAND_MODE;
@@ -264,14 +264,16 @@ void clear(uint8_t display_buf[DISPLAY_WIDTH][DISPLAY_HEIGHT]) {
 
 int main() {
 	ports_init();
-	// display_init();
 	oled_display_init();
+	// display_init();
 
-	player p = { MAP_WIDTH / 2.0f, MAP_HEIGHT / 2.0f, 0.0f };
+	player p = { MAP_WIDTH / 2.0f, MAP_HEIGHT / 2.0f, 0.0f, 0.0f };
 
 	// color column_buf[DISPLAY_HEIGHT];
 	uint8_t display_buf[DISPLAY_WIDTH][DISPLAY_HEIGHT];
 
+	// Game data
+	int loops = 0;
 	int goals_taken = 0;
 	int level = 1;
 	place_goal();
@@ -285,12 +287,8 @@ int main() {
 		// for (int y = 0; y < DISPLAY_HEIGHT; y++) {
 		// 	for (int x = 0; x < DISPLAY_WIDTH; x++) {
 		// 		color pixel_color = { 0, 0, 0 };
-				
-		// 		if (x % 2 == 0) {
-		// 			pixel_color.r = 0xFF;
-		// 			pixel_color.g = 0xFF;
-		// 			pixel_color.b = 0xFF;
-		// 		}
+		// 		if (x % 2 == 0)
+		// 			pixel_color = { 0xFF, 0xFF, 0xFF };
 
 		// 		DISPLAY_COMMAND_MODE;
 		// 		spi_send(0x2C); // Memory write command
@@ -300,29 +298,39 @@ int main() {
 		// 	}
 		// }
 
+		// Game state logic
+		// If player steps into a goal block, remove it from the map
 		if (is_goal(p.x, p.y)) {
 			map[(int)p.y][(int)p.x] = '.';
 			goals_taken++;
 
+			// If player has taken all of the goal blocks in the level, 
+			// reset and advance to the next level
 			if (goals_taken == level) {
 				level++;
-				setLights(level);
+				setLights(level); // Display new level on LEDs
 				goals_taken = 0;
 				p.x = MAP_WIDTH / 2.0f;
 				p.y = MAP_HEIGHT / 2.0f;
 				p.facingAngle = 0;
 
+				update_oled_display(display_buf);
+				quicksleep(5000000);
+
+				// Randomly place out as many goal blocks as the level number
 				for (int i = 0; i < level; i++)
 					place_goal();
 			}
 		}
+		// Bob head up and down to simulate breathing
+		p.breathing = 2 * sinf(loops);
 
 		float sinAngle = sinf(p.facingAngle);
 		float cosAngle = cosf(p.facingAngle);
 
 		// Execute raycasting logic and draw for each column on the screen
 		// for (int x = 0; x < DISPLAY_WIDTH; x++) {
-			render_column(display_buf, p, sinAngle, cosAngle);
+		render(display_buf, p, sinAngle, cosAngle);
 
 			// update_display(column_buf, x);
 		// }
@@ -331,7 +339,8 @@ int main() {
 		float deltaTime = (TMR2 - startTime); // in milliseconds
 		
 		control_player(&p, sinAngle, cosAngle, deltaTime);
-		
+
+		loops = (loops + 1) % 6; // For player breathing
 	}
 
     return 0;

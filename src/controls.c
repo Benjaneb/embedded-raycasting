@@ -58,4 +58,9 @@ void control_player(player *p, float sinAngle, float cosAngle, float deltaTime) 
     if (get_button4()) {
         p->facingAngle += turningSpeed;
     }
+
+    if (p->facingAngle < 0)
+        p->facingAngle += 2*PI;
+    else if (p->facingAngle > 2*PI)
+        p->facingAngle -= 2*PI;
 }
