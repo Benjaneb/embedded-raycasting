@@ -254,17 +254,25 @@ void update_display(color column_buf[DISPLAY_HEIGHT], int column) {
 	CS_HIGH; // Disable transmission
 }
 
+void clear(uint8_t display_buf[DISPLAY_WIDTH][DISPLAY_HEIGHT]) {
+	for (int x = 0; x < DISPLAY_WIDTH; x++)
+		for (int y = 0; y < DISPLAY_WIDTH; y++)
+			display_buf[x][y] = 0;
+}
+
 int main() {
 	ports_init();
 	// display_init();
 	oled_display_init();
 
-	player p = { 0.0f, 0.0f, 0.0f };
+	player p = { MAP_WIDTH / 2.0f, MAP_HEIGHT / 2.0f, 0.0f };
+
+	// color column_buf[DISPLAY_HEIGHT];
+	uint8_t display_buf[DISPLAY_WIDTH][DISPLAY_HEIGHT];
 	
 	// Game loop
 	while (1) {
-		// color column_buf[DISPLAY_HEIGHT];
-		uint8_t display_buf[DISPLAY_WIDTH][DISPLAY_HEIGHT];
+		clear(display_buf);
 		// Test
 		// for (int y = 0; y < DISPLAY_HEIGHT; y++) {
 		// 	for (int x = 0; x < DISPLAY_WIDTH; x++) {
@@ -295,7 +303,7 @@ int main() {
 		}
 		update_oled_display(display_buf);
 		
-		move_player(p, sinAngle, cosAngle);
+		control_player(&p, sinAngle, cosAngle);
 	}
 
     return 0;
