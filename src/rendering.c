@@ -54,7 +54,7 @@ void draw_vertical_line(uint8_t column_buf[DISPLAY_HEIGHT], int start_y, int end
 // Use a grid to store the map
 int map_grid[MAP_WIDTH][MAP_HEIGHT];
 
-// Initialize grid
+// Initialize the grid with the map data
 void init_map_grid() {
     for (int x = 0; x < MAP_WIDTH; x++) {
         for (int y = 0; y < MAP_HEIGHT; y++) {
@@ -104,7 +104,11 @@ void render_column(uint8_t column_buf[DISPLAY_HEIGHT], int screenX, player p, fl
         if (is_wall(x, y)) {
             // Use Manhattan distance
             float distance = abs(x - p.x) + abs(y - p.y);
-            // ...
+            float wall_height = DISPLAY_HEIGHT / (distance * 4.0f);
+            int start_y = DISPLAY_HEIGHT / 2.0f - wall_height / 2.0f;
+            int end_y = DISPLAY_HEIGHT / 2.0f + wall_height / 2.0f;
+            draw_vertical_line(column_buf, start_y, end_y);
+            break;
         }
     }
-}
+
