@@ -16,6 +16,12 @@ typedef struct {
 	float x, y, facingAngle;
 } player;
 
+char map[MAP_HEIGHT][MAP_WIDTH];
+
+void place_goal();
+
+int is_goal(float x, float y);
+
 int is_wall(float x, float y);
 
 void render_column(uint8_t column_buf[DISPLAY_WIDTH][DISPLAY_HEIGHT], player p, float sinAngle, float cosAngle);

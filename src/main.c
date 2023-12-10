@@ -272,6 +272,10 @@ int main() {
 	// color column_buf[DISPLAY_HEIGHT];
 	uint8_t display_buf[DISPLAY_WIDTH][DISPLAY_HEIGHT];
 
+	int goals_taken = 0;
+	int level = 1;
+	place_goal();
+	setLights(level);
 
 	// Game loop
 	while (1) {
@@ -296,6 +300,23 @@ int main() {
 		// 	}
 		// }
 
+		if (is_goal(p.x, p.y)) {
+			map[(int)p.y][(int)p.x] = '.';
+			goals_taken++;
+
+			if (goals_taken == level) {
+				level++;
+				setLights(level);
+				goals_taken = 0;
+				p.x = MAP_WIDTH / 2.0f;
+				p.y = MAP_HEIGHT / 2.0f;
+				p.facingAngle = 0;
+
+				for (int i = 0; i < level; i++)
+					place_goal();
+			}
+		}
+
 		float sinAngle = sinf(p.facingAngle);
 		float cosAngle = cosf(p.facingAngle);
 
@@ -307,7 +328,7 @@ int main() {
 		// }
 		update_oled_display(display_buf);
 
-		float deltaTime = (TMR2 - startTime) / 80000000 * 1000; // in milliseconds
+		float deltaTime = (TMR2 - startTime); // in milliseconds
 		
 		control_player(&p, sinAngle, cosAngle, deltaTime);
 		
